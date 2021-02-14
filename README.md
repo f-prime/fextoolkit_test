@@ -10,7 +10,7 @@ The frontend uses VueJS and the backend uses Python 3 and the Flask web framewor
 
 # Instructions
 
-1. Fork this repository
+1. Clone this repo and create a new private repository under your account that will contain the updates. Share that repository with me so I can view it.
 2. Take a look at the design mock up: https://xd.adobe.com/view/4a4d4937-4439-4bfd-b7a8-e52c9d367d0d-1f1e/
 2. Get the frontend and backend working. In its current state you should be able to run searches without modifying the code at all.
 3. Complete the tasks in any order that you see fit.
