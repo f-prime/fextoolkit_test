@@ -12,10 +12,13 @@
           </div>
           <div class="input-fields">
             <input v-model="firstName" type="text" placeholder="FIRST NAME">
-            <input v-model="lastName" type="text" placeholder="FIRST NAME">
+            <input v-model="lastName" type="text" placeholder="LAST NAME">
             <select v-model="state">
               <option value="">State</option>
-              <option v-for="state in states" :value="state.abbreviation">{{ state.name }}</option>
+              <option 
+                v-for="(state, index) in states" 
+                :key="index" 
+                :value="state.abbreviation">{{ state.name }}</option>
             </select>
             <button @click="search">Search</button>
           </div>
@@ -23,7 +26,7 @@
         <div class="results-container">
           <div class="results-title">Results</div>
           <div class="results">
-            <div class="result" v-for="result in results">
+            <div class="result" v-for="(result, index) in results" :key="index">
               <div class="result-col">
                 <div class="result-col-title">
                   FIRST NAME
