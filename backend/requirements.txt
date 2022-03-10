@@ -1,2 +1,5 @@
-flask==1.1.2
+flask==1.1.4
 Flask-Cors==3.0.9
+# https://github.com/aws/aws-sam-cli/issues/3661
+# Resolves `ImportError: cannot import name 'soft_unicode' from 'markupsafe`
+markupsafe==2.0.1
