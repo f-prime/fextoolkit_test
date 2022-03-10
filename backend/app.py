@@ -6,9 +6,9 @@ app = Flask(__name__)
 CORS(app)
 
 def search_phone_book(**kwargs):
-    search_first_name = kwargs.get("first_name")
-    search_last_name = kwargs.get("last_name")
-    search_state = kwargs.get("state")
+    search_first_name = kwargs.get("first_name").lower()
+    search_last_name = kwargs.get("last_name").lower()
+    search_state = kwargs.get("state").lower()
 
     results = []
 
@@ -18,13 +18,13 @@ def search_phone_book(**kwargs):
         for row in phonebook_csv_reader:
             first_name, last_name, state, phonenumber = row
 
-            if search_first_name and first_name != search_first_name:
+            if search_first_name and first_name.lower() != search_first_name:
                 continue
 
-            if search_last_name and last_name != search_last_name:
+            if search_last_name and last_name.lower() != search_last_name:
                 continue
 
-            if search_state and state != search_state:
+            if search_state and state.lower() != search_state:
                 continue
 
             row_to_search_match_dict = {
