@@ -4,45 +4,35 @@ import csv
 
 app = Flask(__name__)
 CORS(app)
+cache = []
 
-def search_phone_book(**kwargs):
-    search_first_name = kwargs.get("first_name").lower()
-    search_last_name = kwargs.get("last_name").lower()
-    search_state = kwargs.get("state").lower()
-
-    results = []
-
+def populate_cache():
     with open("data/phonebook.csv") as phonebook: 
         phonebook_csv_reader = csv.reader(phonebook)
-
         for row in phonebook_csv_reader:
             first_name, last_name, state, phonenumber = row
-
-            if search_first_name and first_name.lower() != search_first_name:
-                continue
-
-            if search_last_name and last_name.lower() != search_last_name:
-                continue
-
-            if search_state and state.lower() != search_state:
-                continue
-
             row_to_search_match_dict = {
                 "first_name": first_name,
                 "last_name": last_name,
                 "state": state,
                 "phonenumber": phonenumber
             }
+            cache.append(row_to_search_match_dict)
 
-            results.append(row_to_search_match_dict)
-
-    return results
+def search_phone_book(**kwargs):
+    search_first_name = kwargs.get("first_name")
+    search_last_name = kwargs.get("last_name")
+    search_state = kwargs.get("state")
+    offset = int(kwargs.get("offset") or 0)
+    limit = int(kwargs.get("limit") or 100)
+    results = list(filter(lambda item: item["first_name"].lower() == search_first_name or item["last_name"].lower() == search_last_name or item["state"].lower() == search_state, cache))
+    return results[offset:limit]
 
 @app.route("/search/", methods=['GET'])
 def search_phonebook():
-    first_name = request.args.get("firstName")
-    last_name = request.args.get("lastName")
-    state = request.args.get("state")
+    first_name = request.args.get("firstName").lower()
+    last_name = request.args.get("lastName").lower()
+    state = request.args.get("state").lower()
 
     if not any([first_name, last_name, state]):
         return jsonify({"error": "At least one of the three fields must be filled."}), 400
@@ -56,4 +46,5 @@ def search_phonebook():
     return jsonify(search_results)
 
 if __name__ == "__main__":
+    populate_cache()
     app.run(debug=True, port=8080, threaded=True)
