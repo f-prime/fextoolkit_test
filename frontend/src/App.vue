@@ -14,25 +14,25 @@
             <input v-model="firstName" type="text" placeholder="FIRST NAME">
             <input v-model="lastName" type="text" placeholder="LAST NAME">
             <select v-model="state">
-              <option value="">State</option>
+              <option value="">STATE</option>
               <option 
                 v-for="(state, index) in states" 
                 :key="index" 
                 :value="state.abbreviation">{{ state.name }}</option>
             </select>
-            <button @click="search">Search</button>
+            <button @click="search" class="search-btn">Search</button>
           </div>
         </div>
         <div class="results-container">
           <div class="results-title">Results</div>
           <div class="results">
-            <div class="result" v-for="(result, index) in results" :key="index">
+            <div class="result" v-for="(item, index) in items" :key="index">
               <div class="result-col">
                 <div class="result-col-title">
                   FIRST NAME
                 </div>
                 <div class="result-col-val">
-                  {{ result.first_name }}
+                  {{ item.first_name }}
                 </div>
               </div>
               <div class="result-col">
@@ -40,7 +40,7 @@
                   LAST NAME
                 </div>
                 <div class="result-col-val">
-                  {{ result.last_name }}
+                  {{ item.last_name }}
                 </div>
               </div>
               <div class="result-col">
@@ -48,17 +48,22 @@
                   STATE
                 </div>
                 <div class="result-col-val">
-                  {{ result.state }}
+                  {{ item.state }}
                 </div>
               </div>
               <div class="result-col">
                 <div class="result-col-title">
-                  PHONENUMBER
+                  PHONE NUMBER
                 </div>
                 <div class="result-col-val">
-                  {{ result.phonenumber }}
+                  {{ item.phonenumber }}
                 </div>
               </div>
+            </div>
+            <div v-if="items.length > 0" class="paging-container">
+              <img @click="next()" src="./assets/arrow-left.svg">
+              <span @click="selectPage(n)" v-for="n in numPages" :key=n v-bind:class="{ 'active-page': activePage === n }">{{n}}</span>
+              <img @click="next()" src="./assets/arrow-right.svg">
             </div>
           </div>
         </div>
@@ -133,20 +138,25 @@ export default {
         {"name":"Wisconsin","abbreviation":"WI"},
         {"name":"Wyoming","abbreviation":"WY"}
       ],
-
-      results: [],
+      limit: 10,
+      offset: 0,
+      items: [],
+      searchParams: {},
+      result: {}
     };
   },
 
   methods: {
     async search() {
-      const searchParams = {
+      this.searchParams = {
         firstName: this.firstName,
         lastName: this.lastName,
-        state: this.state
+        state: this.state,
+        limit: this.limit,
+        offset: this.offset
       };
 
-      const queryParams = new URLSearchParams(searchParams).toString();
+      const queryParams = new URLSearchParams(this.searchParams).toString();
 
       const request = await fetch(`${API_URL}/search/?${queryParams}`);
 
@@ -154,9 +164,43 @@ export default {
         alert("Something went wrong while fetching the results");
         return;
       }
-
-      this.results = await request.json();
+      this.result = await request.json();
+      this.items = this.result.items;
+      this.numPages = Math.ceil(this.result.total / this.result.count);
+      this.activePage = 1;
     },
+    async next() {
+      if (this.searchParams.offset + this.searchParams.limit > this.result.total) {
+        this.searchParams.offset = this.result.total - this.searchParams.limit;
+      } else {
+        this.searchParams.offset += this.searchParams.limit;
+      }
+      const queryParams = new URLSearchParams(this.searchParams).toString();
+      const request = await fetch(`${API_URL}/search/?${queryParams}`);
+      this.result = await request.json();
+      this.items = this.result.items;
+      this.activePage += 1;
+    },
+    async prev() {
+      if (this.searchParams.offset - this.searchParams.limit < 0) {
+        this.searchParams.offset = 0;
+      } else {
+        this.searchParams.offset -= this.searchParams.limit;
+      }
+      const queryParams = new URLSearchParams(this.searchParams).toString();
+      const request = await fetch(`${API_URL}/search/?${queryParams}`);
+      this.result = await request.json();
+      this.items = this.result.items;
+      this.activePage -= 1;
+    },
+    async selectPage(pageNum) {
+      this.searchParams.offset = pageNum * this.searchParams.limit;
+      const queryParams = new URLSearchParams(this.searchParams).toString();
+      const request = await fetch(`${API_URL}/search/?${queryParams}`);
+      this.result = await request.json();
+      this.items = this.result.items;
+      this.activePage = pageNum;
+    }
   }
 }
 </script>
@@ -214,6 +258,42 @@ html, body {
   margin-top: 1rem;
 }
 
+.input-fields > input {
+  /* Layout Properties */
+  top: 232px;
+  left: 42px;
+  width: 309px;
+  height: 53px;
+  /* UI Properties */
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  border: 1px solid #3E6697;
+  border-radius: 27px;
+  opacity: 1;
+}
+
+.input-fields > select {
+  /* https://stackoverflow.com/questions/611482/change-color-and-appearance-of-drop-down-arrow
+    It is notoriously difficult to style a select component, such as the position or color of the caret.
+    Better to use a third party component to replace the native select (e.g. https://ng-select.github.io/ng-select#/data-sources)
+  */
+  /* Layout Properties */
+  top: 298px;
+  left: 42px;
+  width: 182px;
+  height: 53px;
+  /* UI Properties */
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  border: 1px solid #3E6697;
+  border-radius: 27px;
+  opacity: 1;
+  /* UI Properties */
+  text-align: left;
+  font: normal normal medium 12px/16px Roboto;
+  letter-spacing: 0px;
+  color: #3E6697;
+  opacity: 1;
+}
+
 .results > * {
   margin-top: 1rem;
 }
@@ -221,6 +301,93 @@ html, body {
 .result {
   display: flex;
   flex-direction: row;
-  justify-content: space-between; 
+  justify-content: space-between;
+  /* Layout Properties */
+  /* top: 142px;
+  left: 546px;
+  width: 542px; */
+  /* height: 65px; */
+  /* UI Properties */
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  border: 1px solid #3E6697;
+  opacity: 1;
+}
+
+.result-col-title {
+  /* Layout Properties */
+  /* top: 152px;
+  left: 564px;
+  width: 68px; */
+  height: 16px;
+  /* UI Properties */
+  text-align: left;
+  font: normal normal normal 12px/16px Roboto;
+  letter-spacing: 0px;
+  color: #3E6697;
+  text-transform: uppercase;
+  opacity: 1;
+}
+
+.result-col-val {
+  /* Layout Properties */
+  /* top: 176px;
+  left: 564px;
+  width: 39px; */
+  height: 21px;
+  /* UI Properties */
+  text-align: left;
+  font: normal normal normal 16px/21px Roboto;
+  letter-spacing: 0px;
+  color: #3E6697;
+  opacity: 1;
+}
+
+::placeholder {
+  /* UI Properties */
+  text-align: left;
+  font: normal normal medium 12px/16px Roboto;
+  letter-spacing: 0px;
+  color: #3E6697;
+  opacity: 1;
+}
+
+.light-blue {
+  color: #E9F3FF;
+}
+
+.dark-blue {
+  color: #3E6697;
+}
+
+.active-page {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.paging-container {
+  text-align: center;
+}
+
+.paging-container > img {
+  vertical-align: bottom;
+  cursor: pointer;
+}
+
+.paging-container > span {
+  margin: 0px 3px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.search-btn {
+  /* Layout Properties */
+  top: 398px;
+  left: 242px;
+  width: 109px;
+  height: 47px;
+  /* UI Properties */
+  background: transparent url('./assets/blue.svg') 0% 0% no-repeat padding-box;
+  opacity: 1;
+  color: #FFFFFF;
 }
 </style>

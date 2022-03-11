@@ -26,13 +26,16 @@ def search_phone_book(**kwargs):
     offset = int(kwargs.get("offset") or 0)
     limit = int(kwargs.get("limit") or 100)
     results = list(filter(lambda item: item["first_name"].lower() == search_first_name or item["last_name"].lower() == search_last_name or item["state"].lower() == search_state, cache))
-    return results[offset:limit]
+    items = results[offset:offset + limit]
+    return {"items": items, "total": len(results), "count": len(items)}
 
 @app.route("/search/", methods=['GET'])
 def search_phonebook():
     first_name = request.args.get("firstName").lower()
     last_name = request.args.get("lastName").lower()
     state = request.args.get("state").lower()
+    limit = request.args.get("limit")
+    offset = request.args.get("offset")
 
     if not any([first_name, last_name, state]):
         return jsonify({"error": "At least one of the three fields must be filled."}), 400
@@ -40,7 +43,9 @@ def search_phonebook():
     search_results = search_phone_book(
         first_name=first_name, 
         last_name=last_name, 
-        state=state
+        state=state,
+        limit=limit,
+        offset=offset
     )
 
     return jsonify(search_results)
